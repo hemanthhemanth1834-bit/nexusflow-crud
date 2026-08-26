@@ -1,0 +1,11 @@
+{
+  "name": "nexusflow-crud",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm install --prefix client && npm run build --prefix client && npm install --prefix server && npx prisma generate --schema=server/prisma/schema.prisma && npx tsc --project server/tsconfig.json",
+    "start": "npx prisma db push --skip-generate --schema=server/prisma/schema.prisma && node server/dist/index.js",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev"
+  }
+}
