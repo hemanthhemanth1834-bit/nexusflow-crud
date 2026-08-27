@@ -1,7 +1,7 @@
 # NexusFlow — Premium CRUD Application
 
 A production-quality full-stack CRUD application with a persistent SQLite database, premium glassmorphism UI, 3D effects, and smooth animations.
-
+live link:https://crud-app-sable-alpha.vercel.app
 ## Features
 
 - **Full CRUD** — Create, Read, Update, Delete records
