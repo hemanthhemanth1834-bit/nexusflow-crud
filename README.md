@@ -1,15 +1,18 @@
 # NexusFlow — Premium CRUD Application
 
-A production-quality full-stack CRUD application with a persistent SQLite database, premium glassmorphism UI, 3D effects, and smooth animations.
-live link:https://crud-app-sable-alpha.vercel.app
+A production-quality full-stack CRUD application with a **PostgreSQL** database (via Prisma ORM), a **relational** schema (User → Project → Record), premium glassmorphism UI, 3D effects, and smooth animations.
+
+- **Live application:** [https://crud-app-sable-alpha.vercel.app](https://crud-app-sable-alpha.vercel.app)
+- **Repository:** [https://github.com/hemanthhemanth1834-bit/nexusflow-crud](https://github.com/hemanthhemanth1834-bit/nexusflow-crud)
+
 ## Features
 
-- **Full CRUD** — Create, Read, Update, Delete records
+- **Full CRUD** — Create, Read, Update, Delete records (persisted in PostgreSQL)
 - **Search** — Debounced full-text search across title and description
 - **Filter** — Filter by status, priority, and category
 - **Sort** — Sort by newest, oldest, name, or recently updated
-- **Persistent Storage** — SQLite database via Prisma ORM (survives refreshes and restarts)
-- **Form Validation** — Client-side and server-side validation with Zod
+- **Persistent Storage** — PostgreSQL database via Prisma ORM (survives refreshes and server restarts)
+- **Server-side Validation** — Zod validation on create/update (tested directly against the API)
 - **Loading States** — Skeleton loaders and spinner animations
 - **Empty States** — Beautiful empty state messaging
 - **Error Handling** — Graceful error states with retry options
@@ -32,158 +35,153 @@ live link:https://crud-app-sable-alpha.vercel.app
 - Node.js + Express
 - TypeScript
 - Prisma ORM
-- SQLite (portable, no setup required)
+- **PostgreSQL** (hosted production database)
 - Zod (validation)
 - Helmet, CORS, Morgan (security/logging)
+
+### Deployment
+- **Vercel** (serverless API + static frontend)
+- **Neon / Supabase / Vercel Postgres** (hosted PostgreSQL)
+
+## Database — Relational Schema
+
+> The schema defines **3 related tables** as required.
+
+```
+User ──1──●── Project ──1──●── Record
+```
+
+| Model | Relationships |
+|-------|---------------|
+| `User` | has many `Project` |
+| `Project` | belongs to `User`, has many `Record` |
+| `Record` | belongs to `Project` (optional) |
+
+```prisma
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  projects  Project[]
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String   @default("")
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  records     Record[]
+}
+
+model Record {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String   @default("")
+  status      String   @default("active")
+  priority    String   @default("medium")
+  category    String   @default("general")
+  projectId   Int?
+  project     Project? @relation(fields: [projectId], references: [id])
+}
+```
 
 ## Project Structure
 
 ```
-crud-app/
-├── client/                    # Frontend
+nexusflow-crud/
+├── api/
+│   └── index.ts              # Vercel serverless handler → Express app → Prisma
+├── client/                   # Frontend (React + Vite)
 │   ├── src/
-│   │   ├── components/        # UI components
-│   │   │   ├── Header.tsx     # Sticky glass header
-│   │   │   ├── Dashboard.tsx  # Dashboard homepage
-│   │   │   ├── RecordsList.tsx # Records management
-│   │   │   ├── RecordForm.tsx  # Create/Edit modal
-│   │   │   ├── DeleteDialog.tsx # Delete confirmation
-│   │   │   ├── ViewDialog.tsx  # Record detail view
-│   │   │   ├── StatsCard.tsx   # Animated stats card
-│   │   │   ├── AnimatedCounter.tsx # Spring-animated number
-│   │   │   ├── StatusBadge.tsx # Status pill badge
-│   │   │   ├── PriorityBadge.tsx # Priority pill badge
-│   │   │   ├── CategoryBadge.tsx # Category pill badge
-│   │   │   ├── Toast.tsx       # Toast notification system
-│   │   │   ├── Background3D.tsx # Floating gradient blobs
-│   │   │   ├── LoadingSpinner.tsx
-│   │   │   └── EmptyState.tsx
-│   │   ├── hooks/             # React Query hooks
-│   │   ├── services/          # API client
-│   │   ├── types/             # TypeScript types
-│   │   ├── App.tsx
-│   │   ├── main.tsx
-│   │   └── index.css          # Tailwind + custom styles
+│   │   ├── components/       # UI components
+│   │   ├── hooks/            # React Query hooks
+│   │   ├── services/         # API client
+│   │   ├── types/            # TypeScript types
+│   │   └── App.tsx
 │   └── index.html
-├── server/                    # Backend
+├── server/                   # Backend
 │   ├── src/
-│   │   ├── controllers/       # Route handlers
-│   │   ├── routes/            # Express routes
-│   │   ├── validators/        # Zod schemas
-│   │   ├── middleware/         # Error handling
-│   │   ├── utils/             # Prisma singleton
-│   │   └── index.ts           # Server entry point
-│   ├── prisma/
-│   │   ├── schema.prisma      # Database schema
-│   │   ├── seed.ts            # Sample data
-│   │   └── dev.db             # SQLite database
-│   └── .env
+│   │   ├── app.ts            # Shared Express app (used by API + local server)
+│   │   ├── controllers/      # Route handlers (Prisma)
+│   │   ├── routes/           # Express routes
+│   │   ├── validators/       # Zod schemas
+│   │   ├── middleware/       # Error handling
+│   │   ├── utils/prisma.ts   # Prisma singleton
+│   │   └── index.ts          # Local server entry point
+│   └── prisma/
+│       ├── schema.prisma     # Database schema (PostgreSQL)
+│       └── seed.ts           # Sample data (User → Project → Records)
+├── package.json
+├── vercel.json
 ├── .env.example
 └── README.md
 ```
 
-## Installation
+## Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | Hosted PostgreSQL connection string | `postgresql://user:pass@host:5432/db?sslmode=require` |
+| `NODE_ENV` | Environment mode | `production` |
+| `CORS_ORIGIN` | Allowed frontend origin | `https://crud-app-sable-alpha.vercel.app` |
+| `PORT` | Server port (local) | `3001` |
+| `VITE_API_URL` | Frontend API base | `/api` |
+
+> **Do not commit your real `DATABASE_URL`.** Set it as a Vercel Environment Variable (Settings → Environment Variables → `DATABASE_URL`) instead.
+
+## Local Development
 
 ```bash
-# Navigate to the crud-app directory
-cd crud-app
+# 1. Install dependencies
+cd server && npm install
+cd ../client && npm install
 
-# Install server dependencies
+# 2. Configure server/.env with your PostgreSQL DATABASE_URL
+
+# 3. Set up the database
 cd server
-npm install
-
-# Install client dependencies
-cd ../client
-npm install
-```
-
-## Environment Setup
-
-```bash
-# Server (.env is pre-configured for development)
-# Optional: copy and customize
-cp .env.example server/.env
-```
-
-Required environment variables:
-- `DATABASE_URL` — Database connection string (default: `file:./dev.db`)
-- `PORT` — Server port (default: `3001`)
-- `NODE_ENV` — Environment mode (default: `development`)
-
-## Database Setup
-
-```bash
-cd server
-
-# Generate Prisma client
 npx prisma generate
-
-# Push schema to database
 npx prisma db push
-
-# Seed with sample data (optional)
 npx tsx prisma/seed.ts
-```
 
-## Running the Application
-
-```bash
-# Terminal 1 — Start the backend
-cd server
-npm run dev
-
-# Terminal 2 — Start the frontend
-cd client
-npm run dev
-```
-
-Open http://localhost:5173
-
-## Production Build
-
-```bash
-# Build the frontend
-cd client
-npm run build
-
-# The server can run directly
-cd ../server
-npm run build
-npm start
+# 4. Run
+cd server && npm run dev     # backend  (port 3001)
+cd client && npm run dev     # frontend (port 5173)
 ```
 
 ## API Endpoints
 
+All production CRUD operations go through `Prisma → PostgreSQL`:
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/records` | List records (with search, filter, sort, pagination) |
-| GET | `/api/records/stats` | Get dashboard statistics |
+| GET | `/api/records` | List records (search, filter, sort, pagination) |
+| GET | `/api/records/stats` | Dashboard statistics |
 | GET | `/api/records/search?q=term` | Search records |
 | GET | `/api/records/:id` | Get a single record |
 | POST | `/api/records` | Create a record |
 | PUT | `/api/records/:id` | Update a record |
 | DELETE | `/api/records/:id` | Delete a record |
 
-### Query Parameters (GET /api/records)
+### Server-side validation (Zod)
 
-| Param | Type | Description |
-|-------|------|-------------|
-| `search` | string | Search in title and description |
-| `status` | string | Filter: active, archived, draft |
-| `priority` | string | Filter: low, medium, high, critical |
-| `category` | string | Filter: general, project, task, note, idea |
-| `sort` | string | Sort: `field:direction` (e.g., `createdAt:desc`) |
-| `page` | number | Page number (default: 1) |
-| `limit` | number | Results per page (default: 50) |
+- `title` → required, max 200 characters
+- `description` → max 2000 characters
+- `status` → `active` / `archived` / `draft`
+- `priority` → `low` / `medium` / `high` / `critical`
+- `category` → `general` / `project` / `task` / `note` / `idea`
 
-## Testing
+Invalid payloads (e.g. `{ "title": "" }`) return **HTTP 400** with `{ "error": "Validation failed", ... }`.
 
-All CRUD operations were tested end-to-end:
+## Vercel Deployment
 
-- **CREATE** — POST /api/records → 201 Created
-- **READ** — GET /api/records/:id → 200 OK
-- **UPDATE** — PUT /api/records/:id → 200 OK
-- **DELETE** — DELETE /api/records/:id → 200 OK
-- **NOT FOUND** — GET deleted record → 404 Not Found
-- **LIST** — GET /api/records → 200 OK with pagination
-- **STATS** — GET /api/records/stats → 200 OK with real data
+1. Push the repository to GitHub.
+2. Import the repo in Vercel (Framework Preset: `Other`).
+3. Add Environment Variables:
+   - `DATABASE_URL` — your hosted PostgreSQL connection string
+   - `NODE_ENV` = `production`
+   - `CORS_ORIGIN` = your deployed URL (e.g. `https://crud-app-sable-alpha.vercel.app`)
+4. Deploy. The `vercel-build` script generates the Prisma client and builds the frontend.
+
+> The Vercel serverless function (`api/index.ts`) mounts the same Express app used in development — **one API, one Prisma backend** — connected to the hosted PostgreSQL database.

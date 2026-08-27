@@ -6,6 +6,7 @@ export const createRecordSchema = z.object({
   status: z.enum(['active', 'archived', 'draft']).optional().default('active'),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional().default('medium'),
   category: z.enum(['general', 'project', 'task', 'note', 'idea']).optional().default('general'),
+  projectId: z.number().int().positive().optional().nullable(),
 })
 
 export const updateRecordSchema = z.object({
@@ -14,6 +15,7 @@ export const updateRecordSchema = z.object({
   status: z.enum(['active', 'archived', 'draft']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
   category: z.enum(['general', 'project', 'task', 'note', 'idea']).optional(),
+  projectId: z.number().int().positive().optional().nullable(),
 })
 
 export const queryParamsSchema = z.object({

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { Prisma } from '@prisma/client'
 import prisma from '../utils/prisma.js'
 import { createRecordSchema, updateRecordSchema } from '../validators/record.js'
 
@@ -66,7 +67,7 @@ export async function listRecords(req: Request, res: Response) {
 
 export async function getRecord(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id, 10)
+    const id = parseInt(String(req.params.id), 10)
 
     if (isNaN(id)) {
       res.status(400).json({ error: 'Invalid id' })
@@ -97,7 +98,7 @@ export async function createRecord(req: Request, res: Response) {
     }
 
     const record = await prisma.record.create({
-      data: parsed.data,
+      data: parsed.data as Prisma.RecordUncheckedCreateInput,
     })
 
     res.status(201).json(record)
@@ -109,7 +110,7 @@ export async function createRecord(req: Request, res: Response) {
 
 export async function updateRecord(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id, 10)
+    const id = parseInt(String(req.params.id), 10)
 
     if (isNaN(id)) {
       res.status(400).json({ error: 'Invalid id' })
@@ -132,7 +133,7 @@ export async function updateRecord(req: Request, res: Response) {
 
     const record = await prisma.record.update({
       where: { id },
-      data: parsed.data,
+      data: parsed.data as Prisma.RecordUncheckedUpdateInput,
     })
 
     res.json(record)
@@ -144,7 +145,7 @@ export async function updateRecord(req: Request, res: Response) {
 
 export async function deleteRecord(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id, 10)
+    const id = parseInt(String(req.params.id), 10)
 
     if (isNaN(id)) {
       res.status(400).json({ error: 'Invalid id' })

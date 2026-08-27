@@ -92,11 +92,37 @@ const records = [
 async function main() {
   console.log('Seeding database...')
 
-  for (const record of records) {
-    await prisma.record.create({ data: record })
+  const email = 'demo@nexusflow.app'
+  let user = await prisma.user.findUnique({ where: { email } })
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        name: 'Demo User',
+        email,
+      },
+    })
   }
 
-  console.log(`Created ${records.length} records`)
+  let project = await prisma.project.findFirst({
+    where: { userId: user.id, name: 'Default Workspace' },
+  })
+
+  if (!project) {
+    project = await prisma.project.create({
+      data: {
+        name: 'Default Workspace',
+        description: 'Primary workspace for all demo records',
+        userId: user.id,
+      },
+    })
+  }
+
+  for (const record of records) {
+    await prisma.record.create({ data: { ...record, projectId: project.id } })
+  }
+
+  console.log(`Created User (${user.email}), Project (${project.name}) and ${records.length} records`)
 }
 
 main()

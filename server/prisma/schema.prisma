@@ -7,6 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  projects  Project[]
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String   @default("")
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  records     Record[]
+
+  @@index([userId])
+}
+
 model Record {
   id          Int      @id @default(autoincrement())
   title       String
@@ -14,9 +36,12 @@ model Record {
   status      String   @default("active")
   priority    String   @default("medium")
   category    String   @default("general")
+  projectId   Int?
+  project     Project? @relation(fields: [projectId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([projectId])
   @@index([status])
   @@index([priority])
   @@index([category])

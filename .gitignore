@@ -5,5 +5,8 @@ server/prisma/dev.db-journal
 .env
 *.log
 .DS_Store
+.tsbuildinfo
+*.tsbuildinfo
 
 .vercel
+
